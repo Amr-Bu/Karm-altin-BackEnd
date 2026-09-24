@@ -1,0 +1,843 @@
+{
+  "info": {
+    "name": "Rest House Order API – workflow validation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run with tests/run-postman.php for isolated fixtures and DB verification. Manual execution requires fixture values documented in docs/order-api.md."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api"
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "table_id",
+      "value": ""
+    },
+    {
+      "key": "meal_id",
+      "value": ""
+    },
+    {
+      "key": "drink_id",
+      "value": ""
+    },
+    {
+      "key": "snack_id",
+      "value": ""
+    },
+    {
+      "key": "extra_id",
+      "value": ""
+    },
+    {
+      "key": "raw_id",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set(\"token\", json.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1 Create mixed order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set(\"order_id\", json.data.id);",
+              "pm.test(\"data.total_amount\", () => pm.expect(json.data.total_amount).to.eql(\"61.80\"));",
+              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PENDING_APPROVAL\"));",
+              "pm.test(\"Daily order number\", () => pm.expect(json.data.order_number).to.match(/^ORD-\\d{8}-\\d{4}$/));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 Occupied table rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 Approve",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/approve"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PREPARING\"));",
+              "pm.test(\"Approval time\", () => pm.expect(json.data.approved_at).to.be.a(\"string\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 Repeat approval rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/approve"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 Receipt before payment with unreachable network printer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/print-receipt"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"print_job.status\", () => pm.expect(json.print_job.status).to.eql(\"FAILED\"));",
+              "pm.test(\"print_job.attempts\", () => pm.expect(json.print_job.attempts).to.eql(1));",
+              "pm.test(\"print_job.job_type\", () => pm.expect(json.print_job.job_type).to.eql(\"RECEIPT\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 Update increases, decrease, removal, new item",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chairs_count\": 3,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": 3\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": 1\n    },\n    {\n      \"product_id\": \"{{extra_id}}\",\n      \"quantity\": 2\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.total_amount\", () => pm.expect(json.data.total_amount).to.eql(\"81.85\"));",
+              "pm.test(\"Three remaining items\", () => pm.expect(json.data.items).to.have.lengthOf(3));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 Cancel preparing order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/cancel"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8 Repeat cancellation rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/cancel"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9 Raw material rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{raw_id}}\",\n      \"quantity\": 1\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Create pending order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set(\"order_id\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Cancel pending order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/cancel"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Create order exceeding stock",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": 1000\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set(\"order_id\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Approval with insufficient stock rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/approve"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+              "const json = pm.response.json();",
+              "pm.test(\"Shortages returned\", () => pm.expect(json.shortages).to.have.lengthOf(1));",
+              "pm.test(\"shortages.0.shortfall\", () => pm.expect(json.shortages[0].shortfall).to.eql(\"900.000\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Cancel unapproved shortage order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/cancel"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Create order to pay",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set(\"order_id\", json.data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Pending payment rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/pay"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 Approve payable order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/approve"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PREPARING\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 Pay",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/pay"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.payment_status\", () => pm.expect(json.data.payment_status).to.eql(\"PAID\"));",
+              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CLOSED\"));",
+              "pm.test(\"data.amount_paid\", () => pm.expect(json.data.amount_paid).to.eql(null));",
+              "pm.test(\"data.change_amount\", () => pm.expect(json.data.change_amount).to.eql(null));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 Double payment rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/pay"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 Paid update rejected",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chairs_count\": 4\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 Paid cancellation rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/cancel"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "const json = pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 Receipt after payment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/orders/{{order_id}}/print-receipt"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"data.payment_status\", () => pm.expect(json.data.payment_status).to.eql(\"PAID\"));",
+              "pm.test(\"print_job.status\", () => pm.expect(json.print_job.status).to.eql(\"FAILED\"));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

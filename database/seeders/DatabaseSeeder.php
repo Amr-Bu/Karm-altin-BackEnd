@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             ProductIngredientSeeder::class,
             RestaurantTableSeeder::class,
+            SettingSeeder::class,
             OrderSeeder::class,
             OrderItemSeeder::class,
             StockTransactionSeeder::class,
