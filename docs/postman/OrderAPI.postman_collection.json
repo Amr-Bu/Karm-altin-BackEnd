@@ -58,784 +58,2744 @@
     {
       "key": "order_id",
       "value": ""
+    },
+    {
+      "key": "recipe_product_id",
+      "value": ""
+    },
+    {
+      "key": "recipe_component_id",
+      "value": ""
+    },
+    {
+      "key": "recipe_ingredient_id",
+      "value": ""
+    },
+    {
+      "key": "management_category_id",
+      "value": ""
+    },
+    {
+      "key": "management_department_id",
+      "value": ""
+    },
+    {
+      "key": "management_printer_id",
+      "value": ""
+    },
+    {
+      "key": "management_table_id",
+      "value": ""
+    },
+    {
+      "key": "management_table_number",
+      "value": ""
+    },
+    {
+      "key": "management_setting_key",
+      "value": ""
+    },
+    {
+      "key": "employee_id",
+      "value": ""
+    },
+    {
+      "key": "product_id",
+      "value": ""
+    },
+    {
+      "key": "expense_id",
+      "value": ""
+    },
+    {
+      "key": "print_job_id",
+      "value": ""
+    },
+    {
+      "key": "print_job_attempts",
+      "value": ""
+    },
+    {
+      "key": "report_from",
+      "value": "2026-10-01"
+    },
+    {
+      "key": "report_to",
+      "value": "2026-10-31"
     }
   ],
   "item": [
     {
-      "name": "Login",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/login",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "Authentication",
+      "description": "Login starts the full order workflow. The final Top-Selling Products request returns here to log out last. Send Logout individually when finished.",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"token\", json.token);",
+                  "// During a full collection run, defer Logout until the final report request.",
+                  "pm.execution.setNextRequest(\"1 Create mixed order\");"
+                ]
+              }
+            }
+          ]
         },
-        "auth": {
-          "type": "noauth"
-        }
-      },
-      "event": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.collectionVariables.set(\"token\", json.token);"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "1 Create mixed order",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/logout"
           },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Logged out\", () => pm.expect(pm.response.json().message).to.eql(\"Logged out successfully\"));",
+                  "pm.execution.setNextRequest(null);"
+                ]
+              }
             }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
-              "const json = pm.response.json();",
-              "pm.collectionVariables.set(\"order_id\", json.data.id);",
-              "pm.test(\"data.total_amount\", () => pm.expect(json.data.total_amount).to.eql(\"61.80\"));",
-              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PENDING_APPROVAL\"));",
-              "pm.test(\"Daily order number\", () => pm.expect(json.data.order_number).to.match(/^ORD-\\d{8}-\\d{4}$/));"
-            ]
-          }
+          ]
         }
       ]
     },
     {
-      "name": "2 Occupied table rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "Orders",
+      "description": "Existing order workflows plus paginated listing and details. Employees see only their own orders.",
+      "item": [
+        {
+          "name": "1 Create mixed order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
-              "const json = pm.response.json();"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "3 Approve",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
           },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/approve"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PREPARING\"));",
-              "pm.test(\"Approval time\", () => pm.expect(json.data.approved_at).to.be.a(\"string\"));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "4 Repeat approval rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/approve"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
-              "const json = pm.response.json();"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "5 Receipt before payment with unreachable network printer",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/print-receipt"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"print_job.status\", () => pm.expect(json.print_job.status).to.eql(\"FAILED\"));",
-              "pm.test(\"print_job.attempts\", () => pm.expect(json.print_job.attempts).to.eql(1));",
-              "pm.test(\"print_job.job_type\", () => pm.expect(json.print_job.job_type).to.eql(\"RECEIPT\"));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "6 Update increases, decrease, removal, new item",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"chairs_count\": 3,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": 3\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": 1\n    },\n    {\n      \"product_id\": \"{{extra_id}}\",\n      \"quantity\": 2\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"order_id\", json.data.id);",
+                  "pm.test(\"data.total_amount\", () => pm.expect(json.data.total_amount).to.eql(\"61.80\"));",
+                  "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PENDING_APPROVAL\"));",
+                  "pm.test(\"Daily order number\", () => pm.expect(json.data.order_number).to.match(/^ORD-\\d{8}-\\d{4}$/));"
+                ]
+              }
             }
-          }
-        }
-      },
-      "event": [
+          ]
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.total_amount\", () => pm.expect(json.data.total_amount).to.eql(\"81.85\"));",
-              "pm.test(\"Three remaining items\", () => pm.expect(json.data.items).to.have.lengthOf(3));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "7 Cancel preparing order",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/cancel"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "8 Repeat cancellation rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/cancel"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
-              "const json = pm.response.json();"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "9 Raw material rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{raw_id}}\",\n      \"quantity\": 1\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "2 Occupied table rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
-          }
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
-              "const json = pm.response.json();"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "10 Create pending order",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
           },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+                  "const json = pm.response.json();"
+                ]
+              }
             }
-          }
-        }
-      },
-      "event": [
+          ]
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
-              "const json = pm.response.json();",
-              "pm.collectionVariables.set(\"order_id\", json.data.id);"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "11 Cancel pending order",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
+          "name": "3 Approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/approve"
           },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/cancel"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "12 Create order exceeding stock",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": 1000\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PREPARING\"));",
+                  "pm.test(\"Approval time\", () => pm.expect(json.data.approved_at).to.be.a(\"string\"));"
+                ]
+              }
             }
-          }
-        }
-      },
-      "event": [
+          ]
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
-              "const json = pm.response.json();",
-              "pm.collectionVariables.set(\"order_id\", json.data.id);"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "13 Approval with insufficient stock rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
+          "name": "4 Repeat approval rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/approve"
           },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/approve"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
-              "const json = pm.response.json();",
-              "pm.test(\"Shortages returned\", () => pm.expect(json.shortages).to.have.lengthOf(1));",
-              "pm.test(\"shortages.0.shortfall\", () => pm.expect(json.shortages[0].shortfall).to.eql(\"900.000\"));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "14 Cancel unapproved shortage order",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/cancel"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "15 Create order to pay",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+                  "const json = pm.response.json();"
+                ]
+              }
             }
-          }
-        }
-      },
-      "event": [
+          ]
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
-              "const json = pm.response.json();",
-              "pm.collectionVariables.set(\"order_id\", json.data.id);"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "16 Pending payment rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
+          "name": "5 Receipt before payment with unreachable network printer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/print-receipt"
           },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/pay"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
-              "const json = pm.response.json();"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "17 Approve payable order",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/approve"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PREPARING\"));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "18 Pay",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/pay"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.payment_status\", () => pm.expect(json.data.payment_status).to.eql(\"PAID\"));",
-              "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CLOSED\"));",
-              "pm.test(\"data.amount_paid\", () => pm.expect(json.data.amount_paid).to.eql(null));",
-              "pm.test(\"data.change_amount\", () => pm.expect(json.data.change_amount).to.eql(null));"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "19 Double payment rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/pay"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
-              "const json = pm.response.json();"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "20 Paid update rejected",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"chairs_count\": 4\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"print_job.status\", () => pm.expect(json.print_job.status).to.eql(\"FAILED\"));",
+                  "pm.test(\"print_job.attempts\", () => pm.expect(json.print_job.attempts).to.eql(1));",
+                  "pm.test(\"print_job.job_type\", () => pm.expect(json.print_job.job_type).to.eql(\"RECEIPT\"));"
+                ]
+              }
             }
-          }
-        }
-      },
-      "event": [
+          ]
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
-              "const json = pm.response.json();"
-            ]
-          }
+          "name": "6 Update increases, decrease, removal, new item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chairs_count\": 3,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": 3\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": 1\n    },\n    {\n      \"product_id\": \"{{extra_id}}\",\n      \"quantity\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.total_amount\", () => pm.expect(json.data.total_amount).to.eql(\"81.85\"));",
+                  "pm.test(\"Three remaining items\", () => pm.expect(json.data.items).to.have.lengthOf(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7 Cancel preparing order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8 Repeat cancellation rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+                  "const json = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9 Raw material rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{raw_id}}\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+                  "const json = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Create pending order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"order_id\", json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Cancel pending order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 Create order exceeding stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": 1000\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"order_id\", json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 Approval with insufficient stock rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/approve"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Shortages returned\", () => pm.expect(json.shortages).to.have.lengthOf(1));",
+                  "pm.test(\"shortages.0.shortfall\", () => pm.expect(json.shortages[0].shortfall).to.eql(\"900.000\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 Cancel unapproved shortage order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CANCELLED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 Create order to pay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"table_id\": \"{{table_id}}\",\n  \"chairs_count\": 2,\n  \"items\": [\n    {\n      \"product_id\": \"{{meal_id}}\",\n      \"quantity\": \"2\",\n      \"note\": \"بدون ملح\"\n    },\n    {\n      \"product_id\": \"{{drink_id}}\",\n      \"quantity\": \"3\"\n    },\n    {\n      \"product_id\": \"{{snack_id}}\",\n      \"quantity\": \"1\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"order_id\", json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 Pending payment rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/pay"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422\", () => pm.response.to.have.status(422));",
+                  "const json = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 Approve payable order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/approve"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"PREPARING\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 Pay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/pay"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.payment_status\", () => pm.expect(json.data.payment_status).to.eql(\"PAID\"));",
+                  "pm.test(\"data.order_status\", () => pm.expect(json.data.order_status).to.eql(\"CLOSED\"));",
+                  "pm.test(\"data.amount_paid\", () => pm.expect(json.data.amount_paid).to.eql(null));",
+                  "pm.test(\"data.change_amount\", () => pm.expect(json.data.change_amount).to.eql(null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19 Double payment rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/pay"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+                  "const json = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20 Paid update rejected",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chairs_count\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+                  "const json = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21 Paid cancellation rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+                  "const json = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22 Receipt after payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/orders/{{order_id}}/print-receipt"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"data.payment_status\", () => pm.expect(json.data.payment_status).to.eql(\"PAID\"));",
+                  "pm.test(\"print_job.status\", () => pm.expect(json.print_job.status).to.eql(\"FAILED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders?per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "order_status",
+                  "value": "PREPARING",
+                  "disabled": true
+                },
+                {
+                  "key": "payment_status",
+                  "value": "UNPAID",
+                  "disabled": true
+                },
+                {
+                  "key": "employee_id",
+                  "value": "{{employee_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "table_id",
+                  "value": "{{table_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "{{report_from}}",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "{{report_to}}",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "ORD-",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Paginated summaries\", () => { const json = pm.response.json(); pm.expect(json.data).to.be.an(\"array\"); pm.expect(json.meta.per_page).to.eql(20); json.data.forEach(row => pm.expect(row).not.to.have.property(\"items\")); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "orders",
+                "{{order_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Order details and saved items\", () => { const data = pm.response.json().data; pm.expect(String(data.id)).to.eql(String(pm.variables.get(\"order_id\"))); pm.expect(data.items).to.be.an(\"array\"); pm.expect(data).to.have.all.keys(\"id\", \"order_number\", \"employee_id\", \"table_id\", \"employee\", \"table\", \"employee_name\", \"table_number\", \"chairs_count\", \"chair_price\", \"items_subtotal\", \"chairs_total\", \"total_amount\", \"amount_paid\", \"change_amount\", \"order_status\", \"payment_status\", \"approved_by\", \"created_at\", \"approved_at\", \"paid_at\", \"closed_at\", \"cancelled_at\", \"items\"); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "21 Paid cancellation rejected",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/cancel"
-      },
-      "event": [
+      "name": "Employees",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
-              "const json = pm.response.json();"
-            ]
-          }
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/employees",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmad Ali\",\n  \"username\": \"ahmad\",\n  \"password\": \"StrongPassword123\",\n  \"role\": \"EMPLOYEE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Requires an active ADMIN token from Login. Change the username for repeated manual calls. Collection base_url already includes /api."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "const body = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "pm.test(\"Public user data\", () => {",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json.data).to.have.all.keys(\"id\", \"name\", \"username\", \"role\", \"is_active\");",
+                  "  pm.expect(json.data.username).to.eql(body.username);",
+                  "  pm.expect(json.data.role).to.eql(body.role);",
+                  "  pm.expect(json.data.is_active).to.eql(true);",
+                  "});",
+                  "pm.test(\"No authentication secrets\", () => {",
+                  "  [\"password\", \"password_hash\", \"remember_token\", \"token\", \"tokens\"].forEach(key => {",
+                  "    pm.expect(json).not.to.have.property(key);",
+                  "    pm.expect(json.data).not.to.have.property(key);",
+                  "  });",
+                  "});",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"employee_id\", pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/employees",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"System Admin\",\n  \"username\": \"admin2\",\n  \"password\": \"StrongPassword123\",\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Requires an active ADMIN token from Login. Change the username for repeated manual calls. Collection base_url already includes /api."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "const body = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "pm.test(\"Public user data\", () => {",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json.data).to.have.all.keys(\"id\", \"name\", \"username\", \"role\", \"is_active\");",
+                  "  pm.expect(json.data.username).to.eql(body.username);",
+                  "  pm.expect(json.data.role).to.eql(body.role);",
+                  "  pm.expect(json.data.is_active).to.eql(true);",
+                  "});",
+                  "pm.test(\"No authentication secrets\", () => {",
+                  "  [\"password\", \"password_hash\", \"remember_token\", \"token\", \"tokens\"].forEach(key => {",
+                  "    pm.expect(json).not.to.have.property(key);",
+                  "    pm.expect(json.data).not.to.have.property(key);",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/employees"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
+                  "pm.test(\"No employee secrets\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(row => [\"password\", \"password_hash\", \"remember_token\", \"tokens\"].forEach(key => pm.expect(row).not.to.have.property(key))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/employees/{{employee_id}}",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PATCH",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "Ahmad Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "ahmad_updated",
+                  "type": "text"
+                },
+                {
+                  "key": "role",
+                  "value": "EMPLOYEE",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Updated employee\", () => { const data = pm.response.json().data; pm.expect(data.name).to.eql(\"Ahmad Updated\"); pm.expect(data.username).to.eql(\"ahmad_updated\"); });",
+                  "pm.test(\"No employee secrets\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(row => [\"password\", \"password_hash\", \"remember_token\", \"tokens\"].forEach(key => pm.expect(row).not.to.have.property(key))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Activate / Deactivate Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/employees/{{employee_id}}/status",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PATCH",
+                  "type": "text"
+                },
+                {
+                  "key": "is_active",
+                  "value": "0",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Employee deactivated\", () => pm.expect(pm.response.json().data.is_active).to.eql(false));",
+                  "pm.test(\"No employee secrets\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(row => [\"password\", \"password_hash\", \"remember_token\", \"tokens\"].forEach(key => pm.expect(row).not.to.have.property(key))); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "22 Receipt after payment",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": "{{base_url}}/orders/{{order_id}}/print-receipt"
-      },
-      "event": [
+      "name": "Products & Recipes",
+      "description": "Run Login as an active ADMIN first. Existing base_url includes /api. List requests capture existing product/component IDs; Create Product captures the new recipe parent; Add Recipe Component captures the recipe row ID. Catalog alone also accepts employees. Set is_active=true to reactivate. Raw/purchased creation examples are documented in docs/products-recipes-api.md.",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "const json = pm.response.json();",
-              "pm.test(\"data.payment_status\", () => pm.expect(json.data.payment_status).to.eql(\"PAID\"));",
-              "pm.test(\"print_job.status\", () => pm.expect(json.print_job.status).to.eql(\"FAILED\"));"
-            ]
-          }
+          "name": "1. List All Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Products array\", () => pm.expect(json.data).to.be.an(\"array\"));",
+                  "const recipe = json.data.find(p => p.item_type === \"PRODUCED_PRODUCT\");",
+                  "if (recipe) pm.collectionVariables.set(\"recipe_product_id\", recipe.id);",
+                  "pm.test(\"No expanded recipes\", () => json.data.forEach(p => pm.expect(p).not.to.have.property(\"ingredients\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. List Products - Filtered",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products?item_type[]=RAW_MATERIAL&item_type[]=PURCHASED_PRODUCT"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Component types\", () => json.data.forEach(p => pm.expect([\"RAW_MATERIAL\", \"PURCHASED_PRODUCT\"]).to.include(p.item_type)));",
+                  "if (json.data.length) pm.collectionVariables.set(\"recipe_component_id\", json.data[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Employee Product Catalog",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/catalog"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Active sellable products\", () => json.data.forEach(c => c.products.forEach(p => { pm.expect(p.is_active).to.eql(true); pm.expect([\"PRODUCED_PRODUCT\", \"PURCHASED_PRODUCT\"]).to.include(p.item_type); })));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Get Product Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products/{{recipe_product_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Recipe array\", () => pm.expect(json.data.ingredients).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Crispy Meal\",\n  \"item_type\": \"PRODUCED_PRODUCT\",\n  \"unit\": \"PIECE\",\n  \"price\": \"50.00\",\n  \"min_stock\": null,\n  \"category_id\": null,\n  \"department_id\": null,\n  \"is_stock_tracked\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.collectionVariables.set(\"recipe_product_id\", json.data.id);",
+                  "pm.test(\"Produced product awaiting recipe\", () => { pm.expect(json.data.item_type).to.eql(\"PRODUCED_PRODUCT\"); pm.expect(json.data.ingredients).to.eql([]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products/{{recipe_product_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Crispy Meal Updated\",\n  \"price\": \"55.00\",\n  \"unit\": \"PIECE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Updated price\", () => pm.expect(json.data.price).to.eql(\"55.00\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Activate / Deactivate Product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products/{{recipe_product_id}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Inactive\", () => pm.expect(json.data.is_active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Add Recipe Component",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products/{{recipe_product_id}}/ingredients",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"{{recipe_component_id}}\",\n  \"quantity_required\": \"0.250\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.collectionVariables.set(\"recipe_ingredient_id\", json.data.id);",
+                  "pm.test(\"Component and quantity\", () => { pm.expect(json.data.product_id).to.eql(Number(pm.variables.get(\"recipe_component_id\"))); pm.expect(json.data.quantity_required).to.eql(\"0.250\"); pm.expect(json.data.unit).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Update Recipe Component",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products/{{recipe_product_id}}/ingredients/{{recipe_ingredient_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity_required\": \"0.300\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Updated quantity\", () => pm.expect(json.data.quantity_required).to.eql(\"0.300\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Delete Recipe Component",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/products/{{recipe_product_id}}/ingredients/{{recipe_ingredient_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/categories"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Categories array\", () => pm.expect(json.data).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Desserts {{$guid}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.collectionVariables.set(\"management_category_id\", json.data.id);",
+                  "pm.test(\"data.is_active\", () => pm.expect(json.data.is_active).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Category With Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/categories/{{management_category_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Products\", () => pm.expect(json.data.products).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update / Activate / Deactivate Category",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/categories/{{management_category_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"data.is_active\", () => pm.expect(json.data.is_active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "List Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/departments"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Printer summaries\", () => json.data.forEach(d => pm.expect(d).to.have.property(\"printer\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/departments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kitchen {{$guid}}\",\n  \"printer_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.collectionVariables.set(\"management_department_id\", json.data.id);",
+                  "pm.test(\"data.printer\", () => pm.expect(json.data.printer).to.eql(null));",
+                  "pm.test(\"data.is_active\", () => pm.expect(json.data.is_active).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update / Activate / Deactivate Department",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/departments/{{management_department_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"printer_id\": null,\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"data.is_active\", () => pm.expect(json.data.is_active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Printers",
+      "item": [
+        {
+          "name": "List Printers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/printers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Printers array\", () => pm.expect(json.data).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Printer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/printers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kitchen Printer\",\n  \"printer_type\": \"DEPARTMENT\",\n  \"connection_type\": \"NETWORK\",\n  \"connection_config\": \"{\\\"ip\\\":\\\"192.168.1.20\\\",\\\"port\\\":9100}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.collectionVariables.set(\"management_printer_id\", json.data.id);",
+                  "pm.test(\"data.printer_type\", () => pm.expect(json.data.printer_type).to.eql(\"DEPARTMENT\"));",
+                  "pm.test(\"data.is_active\", () => pm.expect(json.data.is_active).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update / Activate / Deactivate Printer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/printers/{{management_printer_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kitchen Printer Updated\",\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"data.name\", () => pm.expect(json.data.name).to.eql(\"Kitchen Printer Updated\"));",
+                  "pm.test(\"data.is_active\", () => pm.expect(json.data.is_active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tables",
+      "item": [
+        {
+          "name": "List Tables With Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tables"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Active order field\", () => json.data.forEach(t => pm.expect(t).to.have.property(\"active_order\")));",
+                  "pm.collectionVariables.set(\"management_table_number\", Math.max(0, ...json.data.map(t => Number(t.table_number))) + 1);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Table",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tables",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"table_number\": \"{{management_table_number}}\",\n  \"default_chairs\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.collectionVariables.set(\"management_table_id\", json.data.id);",
+                  "pm.test(\"data.status\", () => pm.expect(json.data.status).to.eql(\"AVAILABLE\"));",
+                  "pm.test(\"data.active_order\", () => pm.expect(json.data.active_order).to.eql(null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update / Activate / Deactivate Table",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tables/{{management_table_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"default_chairs\": 8,\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"data.default_chairs\", () => pm.expect(json.data.default_chairs).to.eql(8));",
+                  "pm.test(\"data.status\", () => pm.expect(json.data.status).to.eql(\"AVAILABLE\"));",
+                  "pm.test(\"data.is_active\", () => pm.expect(json.data.is_active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "List Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/settings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"Stored strings\", () => json.data.forEach(s => pm.expect(s.value).to.be.a(\"string\")));",
+                  "const setting = json.data.find(s => s.key === \"chair_price\") || json.data[0];",
+                  "if (setting) pm.collectionVariables.set(\"management_setting_key\", setting.key);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Setting Value",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/settings/{{management_setting_key}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": \"20.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
+                  "pm.test(\"data.value\", () => pm.expect(json.data.value).to.eql(\"20.00\"));",
+                  "pm.test(\"Only key/value\", () => pm.expect(json.data).to.have.all.keys(\"key\", \"value\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "description": "Only RAW_MATERIAL and PURCHASED_PRODUCT have physical stock. Set product_id to an existing stocked product. Manual examples use PURCHASE IN; WASTE requires OUT and ADJUSTMENT allows either.",
+      "item": [
+        {
+          "name": "Get Current Inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/inventory"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
+                  "pm.test(\"Physical stock with decimal strings\", () => pm.response.json().data.forEach(row => { pm.expect([\"RAW_MATERIAL\", \"PURCHASED_PRODUCT\"]).to.include(row.item_type); pm.expect(row.current_quantity).to.match(/^\\d+\\.\\d{3}$/); }));",
+                  "const rows = pm.response.json().data; if (!pm.variables.get(\"product_id\") && rows.length) pm.collectionVariables.set(\"product_id\", rows[0].product_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Stock Movements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/inventory/movements"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Product Stock Movements (Filtered)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/inventory/movements?product_id={{product_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
+                  "pm.test(\"Requested product only\", () => pm.response.json().data.forEach(row => pm.expect(String(row.product_id)).to.eql(String(pm.variables.get(\"product_id\")))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Manual Stock Movement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/inventory/movements",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "product_id",
+                  "value": "{{product_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "transaction_type",
+                  "value": "PURCHASE",
+                  "type": "text"
+                },
+                {
+                  "key": "direction",
+                  "value": "IN",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity",
+                  "value": "24.000",
+                  "type": "text"
+                },
+                {
+                  "key": "note",
+                  "value": "شراء مخزون",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Purchase movement and updated stock\", () => { const data = pm.response.json().data; pm.expect(data.transaction_type).to.eql(\"PURCHASE\"); pm.expect(data.direction).to.eql(\"IN\"); pm.expect(data.quantity).to.eql(\"24.000\"); pm.expect(data.current_quantity).to.match(/^\\d+\\.\\d{3}$/); pm.expect(data.reference_order_id).to.eql(null); pm.expect(data).not.to.have.property(\"balance_after\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Expenses",
+      "description": "Expenses are independent of inventory. Updates use POST multipart with _method=PATCH. After cancellation, the full collection run continues to Print Jobs and Reports.",
+      "item": [
+        {
+          "name": "List Expenses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/expenses"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/expenses",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "شراء غاز",
+                  "type": "text"
+                },
+                {
+                  "key": "amount",
+                  "value": "150000.00",
+                  "type": "text"
+                },
+                {
+                  "key": "note",
+                  "value": "أسطوانة للمطبخ",
+                  "type": "text"
+                },
+                {
+                  "key": "expense_date",
+                  "value": "2026-10-11",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"expense_id\", pm.response.json().data.id);",
+                  "pm.test(\"Active expense with exact money\", () => { const data = pm.response.json().data; pm.expect(data.status).to.eql(\"ACTIVE\"); pm.expect(data.amount).to.eql(\"150000.00\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/expenses/{{expense_id}}",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PATCH",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "شراء غاز - تعديل",
+                  "type": "text"
+                },
+                {
+                  "key": "amount",
+                  "value": "145000.00",
+                  "type": "text"
+                },
+                {
+                  "key": "note",
+                  "value": "تحديث المصروف",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Expense updated\", () => pm.expect(pm.response.json().data.amount).to.eql(\"145000.00\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/expenses/{{expense_id}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Expense cancelled\", () => pm.expect(pm.response.json().data.status).to.eql(\"CANCELLED\"));",
+                  "pm.execution.setNextRequest(\"List Print Jobs\");"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Print Jobs",
+      "description": "Listing captures a failed job ID when available. Retry uses its stored payload. NETWORK attempts can result in PRINTED or FAILED; local transports requeue as PENDING.",
+      "item": [
+        {
+          "name": "List Print Jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/print-jobs?per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "print-jobs"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "FAILED",
+                  "disabled": true
+                },
+                {
+                  "key": "job_type",
+                  "value": "RECEIPT",
+                  "disabled": true
+                },
+                {
+                  "key": "printer_id",
+                  "value": "{{management_printer_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "department_id",
+                  "value": "{{management_department_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "order_id",
+                  "value": "{{order_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "{{report_from}}",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "{{report_to}}",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Paginated jobs\", () => { const json = pm.response.json(); pm.expect(json.data).to.be.an(\"array\"); pm.expect(json).to.have.property(\"meta\"); });",
+                  "const failed = pm.response.json().data.find(job => job.status === \"FAILED\"); if (failed) { pm.collectionVariables.set(\"print_job_id\", failed.id); pm.collectionVariables.set(\"print_job_attempts\", failed.attempts); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retry Failed Print Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/print-jobs/{{print_job_id}}/retry",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "print-jobs",
+                "{{print_job_id}}",
+                "retry"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Accurate retry result\", () => { const job = pm.response.json().data; pm.expect([\"PENDING\", \"PRINTED\", \"FAILED\"]).to.include(job.status); pm.expect(job.attempts).to.be.a(\"number\"); if (job.status === \"PRINTED\") pm.expect(job.printed_at).not.to.eql(null); else pm.expect(job.printed_at).to.eql(null); const previous = pm.variables.get(\"print_job_attempts\"); if (previous !== undefined && previous !== \"\") pm.expect(job.attempts).to.eql(Number(previous) + (job.status === \"PENDING\" ? 0 : 1)); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dashboard",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{report_from}}",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "{{report_to}}",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Dashboard sections\", () => { const data = pm.response.json().data; [\"period\", \"sales\", \"expenses\", \"net_cash_flow\", \"orders\", \"tables\", \"top_products\", \"recent_active_orders\"].forEach(key => pm.expect(data).to.have.property(key)); pm.expect(data.top_products.length).to.be.at.most(5); pm.expect(data.recent_active_orders.length).to.be.at.most(10); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Financial Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/financial?from={{report_from}}&to={{report_to}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reports",
+                "financial"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{report_from}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{report_to}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Financial period and daily rows\", () => { const data = pm.response.json().data; pm.expect(data.period.from).to.eql(pm.variables.get(\"report_from\")); pm.expect(data.period.to).to.eql(pm.variables.get(\"report_to\")); pm.expect(data.breakdown).to.be.an(\"array\"); [\"sales\", \"expenses\", \"net_cash_flow\"].forEach(key => pm.expect(data[key]).to.match(/^-?\\d+\\.\\d{2}$/)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Top-Selling Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/top-products?from={{report_from}}&to={{report_to}}&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reports",
+                "top-products"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{report_from}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{report_to}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Top products\", () => { const data = pm.response.json().data; pm.expect(data).to.be.an(\"array\"); pm.expect(data.length).to.be.at.most(10); data.forEach(row => { pm.expect(row.quantity_sold).to.match(/^\\d+\\.\\d{2}$/); pm.expect(row.sales_amount).to.match(/^\\d+\\.\\d{2}$/); }); });",
+                  "pm.execution.setNextRequest(\"Logout\");"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

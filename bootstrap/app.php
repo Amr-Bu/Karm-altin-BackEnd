@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Settings values are generic strings: preserve whitespace and empty strings.
+        $middleware->trimStrings(except: [fn (Request $request) => $request->is('api/settings/*')]);
+        $middleware->convertEmptyStringsToNull(except: [fn (Request $request) => $request->is('api/settings/*')]);
         $middleware->alias([
             'admin' => EnsureAdmin::class,
             'active' => EnsureActiveUser::class,

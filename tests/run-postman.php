@@ -5,6 +5,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 
 use App\Models\InventoryStock;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\RestaurantTable;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Artisan;
@@ -44,6 +45,10 @@ try {
     Artisan::call('migrate', ['--database' => 'order_test', '--force' => true]);
     DB::setDefaultConnection('order_test');
     $f = OrderFixtures::create();
+    // Keep manual stock examples independent of the existing order assertions.
+    $manualProduct = Product::create(['name' => 'Manual stock fixture', 'item_type' => 'RAW_MATERIAL',
+        'unit' => 'KG', 'is_stock_tracked' => true, 'is_active' => true]);
+    InventoryStock::create(['product_id' => $manualProduct->id, 'current_quantity' => '10.000']);
     $env = ['APP_ENV' => 'testing', 'APP_DEBUG' => 'false', 'DB_CONNECTION' => 'mysql', 'DB_URL' => '',
         'DB_HOST' => $originalConfig['host'], 'DB_PORT' => (string) $originalConfig['port'], 'DB_DATABASE' => $database,
         'DB_USERNAME' => $originalConfig['username'], 'DB_PASSWORD' => $originalConfig['password'],
@@ -71,6 +76,7 @@ try {
         $check($ready, 'Test HTTP server did not start: '.$server->getErrorOutput());
     }
     $variables = ['base_url' => 'http://127.0.0.1:'.$ports[0].'/api', 'username' => $f['admin']->username, 'password' => 'test-password', 'table_id' => $f['table']->id];
+    $variables['product_id'] = $manualProduct->id;
     foreach (['meal', 'drink', 'snack', 'extra', 'raw'] as $key) {
         $variables[$key.'_id'] = $f[$key]->id;
     }
@@ -115,10 +121,17 @@ try {
     $parallel = function (array $requests) use ($ports, $token): array {
         $multi = curl_multi_init();
         $handles = [];
-        foreach ($requests as $i => [$path, $body]) {
+        foreach ($requests as $i => $request) {
+            [$path, $body] = $request;
+            $requestToken = $request[2] ?? $token;
+            $multipart = $request[3] ?? false;
             $handle = curl_init('http://127.0.0.1:'.$ports[$i % 2].'/api'.$path);
-            curl_setopt_array($handle, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => json_encode($body), CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 20, CURLOPT_HTTPHEADER => ['Accept: application/json', 'Content-Type: application/json', 'Authorization: Bearer '.$token]]);
+            $headers = ['Accept: application/json', 'Authorization: Bearer '.$requestToken];
+            if (! $multipart) {
+                $headers[] = 'Content-Type: application/json';
+            }
+            curl_setopt_array($handle, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $multipart ? $body : json_encode($body), CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 20, CURLOPT_HTTPHEADER => $headers]);
             curl_multi_add_handle($multi, $handle);
             $handles[] = $handle;
         }
@@ -159,6 +172,8 @@ try {
     $codes = array_column($results, 'status');
     sort($codes);
     $check($codes === [200, 409], 'Concurrent payments must process exactly once.');
+    require __DIR__.'/Support/verify-reports-live.php';
+    require __DIR__.'/Support/verify-remaining-live.php';
     echo "\nDatabase and concurrency checks passed: $assertions assertions.\n";
 } finally {
     foreach ($servers as $server) {

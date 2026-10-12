@@ -1,12 +1,70 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PrinterController;
+use App\Http\Controllers\Api\PrintJobController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\RecipeIngredientController;
+use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\RestaurantTableController;
+use App\Http\Controllers\Api\SettingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/catalog', [ProductController::class, 'catalog']);
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::middleware('admin')->group(function () {
+        Route::get('/print-jobs', [PrintJobController::class, 'index']);
+        Route::post('/print-jobs/{printJob}/retry', [PrintJobController::class, 'retry']);
+        Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+        Route::get('/reports/financial', [ReportController::class, 'financial']);
+        Route::get('/reports/top-products', [ReportController::class, 'topProducts']);
+        Route::get('/inventory', [InventoryController::class, 'index']);
+        Route::get('/inventory/movements', [InventoryController::class, 'movements']);
+        Route::post('/inventory/movements', [InventoryController::class, 'store']);
+        Route::get('/employees', [EmployeeController::class, 'index']);
+        Route::patch('/employees/{employee}', [EmployeeController::class, 'update']);
+        Route::patch('/employees/{employee}/status', [EmployeeController::class, 'status']);
+        Route::get('/expenses', [ExpenseController::class, 'index']);
+        Route::post('/expenses', [ExpenseController::class, 'store']);
+        Route::patch('/expenses/{expense}', [ExpenseController::class, 'update']);
+        Route::post('/expenses/{expense}/cancel', [ExpenseController::class, 'cancel']);
+        Route::get('/categories', [CategoryController::class, 'index']);
+        Route::get('/categories/{category}', [CategoryController::class, 'show']);
+        Route::post('/categories', [CategoryController::class, 'store']);
+        Route::patch('/categories/{category}', [CategoryController::class, 'update']);
+        Route::get('/departments', [DepartmentController::class, 'index']);
+        Route::post('/departments', [DepartmentController::class, 'store']);
+        Route::patch('/departments/{department}', [DepartmentController::class, 'update']);
+        Route::get('/printers', [PrinterController::class, 'index']);
+        Route::post('/printers', [PrinterController::class, 'store']);
+        Route::patch('/printers/{printer}', [PrinterController::class, 'update']);
+        Route::get('/tables', [RestaurantTableController::class, 'index']);
+        Route::post('/tables', [RestaurantTableController::class, 'store']);
+        Route::patch('/tables/{table}', [RestaurantTableController::class, 'update']);
+        Route::get('/settings', [SettingController::class, 'index']);
+        Route::patch('/settings/{key}', [SettingController::class, 'update']);
+        Route::get('/products', [ProductController::class, 'index']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::get('/products/{product}', [ProductController::class, 'show']);
+        Route::patch('/products/{product}', [ProductController::class, 'update']);
+        Route::patch('/products/{product}/status', [ProductController::class, 'status']);
+        Route::post('/products/{product}/ingredients', [RecipeIngredientController::class, 'store']);
+        Route::patch('/products/{product}/ingredients/{ingredient}', [RecipeIngredientController::class, 'update'])->whereNumber('ingredient');
+        Route::delete('/products/{product}/ingredients/{ingredient}', [RecipeIngredientController::class, 'destroy'])->whereNumber('ingredient');
+    });
+    Route::post('/employees', [EmployeeController::class, 'store'])->middleware('admin');
     Route::post('/orders', [OrderController::class, 'store']);
     Route::post('/orders/{order}/approve', [OrderController::class, 'approve'])->middleware('admin');
     Route::patch('/orders/{order}', [OrderController::class, 'update']);

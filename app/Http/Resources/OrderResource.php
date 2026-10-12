@@ -12,6 +12,8 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id, 'order_number' => $this->order_number,
             'employee_id' => $this->employee_id, 'table_id' => $this->table_id,
+            'employee' => $this->whenLoaded('employee', fn () => $this->employee->only(['id', 'name'])),
+            'table' => $this->whenLoaded('table', fn () => $this->table->only(['id', 'table_number'])),
             'employee_name' => $this->whenLoaded('employee', fn () => $this->employee->name),
             'table_number' => $this->whenLoaded('table', fn () => $this->table->table_number),
             'chairs_count' => $this->chairs_count, 'chair_price' => $this->chair_price,

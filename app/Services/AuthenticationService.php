@@ -5,9 +5,18 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthenticationService
 {
+    public function logout(User $user): void
+    {
+        $token = $user->currentAccessToken();
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
+        }
+    }
+
     public function login(array $credentials): array
     {
         $user = User::where('username', $credentials['username'])->first();
