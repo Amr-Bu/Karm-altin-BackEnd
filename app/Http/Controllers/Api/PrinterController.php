@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreatePrinterRequest;
+use App\Http\Requests\PaginationRequest;
 use App\Http\Requests\UpdatePrinterRequest;
 use App\Http\Resources\PrinterResource;
 use App\Models\Printer;
@@ -15,9 +16,9 @@ class PrinterController extends Controller
 {
     public function __construct(private PrinterService $service) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(PaginationRequest $request): AnonymousResourceCollection
     {
-        return PrinterResource::collection($this->service->list());
+        return PrinterResource::collection($this->service->list($request->validated()));
     }
 
     public function store(CreatePrinterRequest $request): JsonResponse

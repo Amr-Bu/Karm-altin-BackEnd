@@ -4,17 +4,17 @@ namespace App\Services;
 
 use App\Exceptions\InvalidOrderStateException;
 use App\Models\RestaurantTable;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RestaurantTableService
 {
-    public function list(): Collection
+    public function list(array $filters = []): LengthAwarePaginator
     {
         return RestaurantTable::with(['orders' => fn ($query) => $query->whereNotIn('order_status', ['CLOSED', 'CANCELLED'])
-            ->select(['id', 'table_id', 'order_number', 'order_status', 'payment_status'])])->orderBy('table_number')->get();
+            ->select(['id', 'table_id', 'order_number', 'order_status', 'payment_status'])])->orderBy('table_number')->orderBy('id')->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
     public function create(array $input): RestaurantTable

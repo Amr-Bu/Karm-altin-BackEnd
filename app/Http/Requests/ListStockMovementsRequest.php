@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ListStockMovementsRequest extends FormRequest
+class ListStockMovementsRequest extends PaginationRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +13,7 @@ class ListStockMovementsRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return parent::rules() + [
             'product_id' => ['sometimes', 'integer', 'exists:products,id'],
             'transaction_type' => ['sometimes', Rule::in(['PURCHASE', 'WASTE', 'ADJUSTMENT', 'ORDER_CONSUMPTION', 'ORDER_RETURN'])],
             'direction' => ['sometimes', Rule::in(['IN', 'OUT'])],

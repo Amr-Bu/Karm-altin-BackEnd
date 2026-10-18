@@ -4,14 +4,14 @@ namespace App\Services;
 
 use App\Exceptions\InvalidOrderStateException;
 use App\Models\Printer;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class PrinterService
 {
-    public function list(): Collection
+    public function list(array $filters = []): LengthAwarePaginator
     {
-        return Printer::orderBy('id')->get();
+        return Printer::orderBy('id')->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
     public function create(array $input): Printer

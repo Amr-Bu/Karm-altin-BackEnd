@@ -8,14 +8,14 @@ use App\Models\InventoryStock;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\StockTransaction;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class InventoryService
 {
     public function __construct(private OrderDataService $data) {}
 
-    public function current(array $filters): Collection
+    public function current(array $filters): LengthAwarePaginator
     {
         return InventoryStock::with('product')->whereHas('product', function ($query) use ($filters) {
             $query->whereIn('item_type', ['RAW_MATERIAL', 'PURCHASED_PRODUCT']);
@@ -30,10 +30,10 @@ class InventoryService
             if (! empty($filters['low_stock_only'])) {
                 $query->whereNotNull('min_stock')->whereColumn('inventory_stock.current_quantity', '<=', 'products.min_stock');
             }
-        })->orderBy('product_id')->get();
+        })->orderBy('product_id')->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
-    public function movements(array $filters): Collection
+    public function movements(array $filters): LengthAwarePaginator
     {
         $query = StockTransaction::with(['product', 'creator'])->orderByDesc('created_at')->orderByDesc('id');
         foreach (['product_id', 'transaction_type', 'direction'] as $field) {
@@ -47,7 +47,7 @@ class InventoryService
             }
         }
 
-        return $query->get();
+        return $query->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
     public function createMovement(array $input, int $adminId): array

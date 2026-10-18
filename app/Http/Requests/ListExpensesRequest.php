@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ListExpensesRequest extends FormRequest
+class ListExpensesRequest extends PaginationRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +13,7 @@ class ListExpensesRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return parent::rules() + [
             'from' => ['sometimes', 'date_format:Y-m-d'],
             'to' => ['sometimes', 'date_format:Y-m-d', ...($this->filled('from') ? ['after_or_equal:from'] : [])],
             'status' => ['sometimes', Rule::in(['ACTIVE', 'CANCELLED'])],

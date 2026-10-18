@@ -4,12 +4,12 @@ namespace App\Services;
 
 use App\Exceptions\InvalidOrderStateException;
 use App\Models\Expense;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ExpenseService
 {
-    public function list(array $filters): Collection
+    public function list(array $filters): LengthAwarePaginator
     {
         $query = Expense::with('creator')->orderByDesc('expense_date')->orderByDesc('id');
         foreach (['status', 'created_by'] as $field) {
@@ -26,7 +26,7 @@ class ExpenseService
             $query->where('name', 'like', '%'.addcslashes($filters['search'], '\\%_').'%');
         }
 
-        return $query->get();
+        return $query->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
     public function create(array $input, int $adminId): Expense

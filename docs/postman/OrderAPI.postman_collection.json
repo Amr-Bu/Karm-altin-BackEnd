@@ -998,6 +998,12 @@
                 {
                   "key": "per_page",
                   "value": "20"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
                 }
               ]
             }
@@ -1010,7 +1016,8 @@
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
-                  "pm.test(\"Paginated summaries\", () => { const json = pm.response.json(); pm.expect(json.data).to.be.an(\"array\"); pm.expect(json.meta.per_page).to.eql(20); json.data.forEach(row => pm.expect(row).not.to.have.property(\"items\")); });"
+                  "pm.test(\"Paginated summaries\", () => { const json = pm.response.json(); pm.expect(json.data).to.be.an(\"array\"); pm.expect(json.meta.per_page).to.eql(20); json.data.forEach(row => pm.expect(row).not.to.have.property(\"items\")); });",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -1173,7 +1180,29 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/employees"
+            "url": {
+              "raw": "{{base_url}}/employees",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -1183,7 +1212,8 @@
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
-                  "pm.test(\"No employee secrets\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(row => [\"password\", \"password_hash\", \"remember_token\", \"tokens\"].forEach(key => pm.expect(row).not.to.have.property(key))); });"
+                  "pm.test(\"No employee secrets\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(row => [\"password\", \"password_hash\", \"remember_token\", \"tokens\"].forEach(key => pm.expect(row).not.to.have.property(key))); });",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -1301,7 +1331,29 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/products"
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -1315,7 +1367,9 @@
                   "pm.test(\"Products array\", () => pm.expect(json.data).to.be.an(\"array\"));",
                   "const recipe = json.data.find(p => p.item_type === \"PRODUCED_PRODUCT\");",
                   "if (recipe) pm.collectionVariables.set(\"recipe_product_id\", recipe.id);",
-                  "pm.test(\"No expanded recipes\", () => json.data.forEach(p => pm.expect(p).not.to.have.property(\"ingredients\")));"
+                  "pm.test(\"No expanded recipes\", () => json.data.forEach(p => pm.expect(p).not.to.have.property(\"ingredients\")));",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });",
+                  "pm.test(\"Product description and images\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(p => { pm.expect(p).to.have.property(\"description\"); pm.expect(p.images).to.be.an(\"array\"); p.images.forEach(i => pm.expect(i.url).to.be.a(\"string\")); }); });"
                 ]
               }
             }
@@ -1335,7 +1389,37 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/products?item_type[]=RAW_MATERIAL&item_type[]=PURCHASED_PRODUCT"
+            "url": {
+              "raw": "{{base_url}}/products?item_type[]=RAW_MATERIAL&item_type[]=PURCHASED_PRODUCT",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "item_type[]",
+                  "value": "RAW_MATERIAL"
+                },
+                {
+                  "key": "item_type[]",
+                  "value": "PURCHASED_PRODUCT"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -1347,7 +1431,9 @@
                   "const json = pm.response.json();",
                   "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
                   "pm.test(\"Component types\", () => json.data.forEach(p => pm.expect([\"RAW_MATERIAL\", \"PURCHASED_PRODUCT\"]).to.include(p.item_type)));",
-                  "if (json.data.length) pm.collectionVariables.set(\"recipe_component_id\", json.data[0].id);"
+                  "if (json.data.length) pm.collectionVariables.set(\"recipe_component_id\", json.data[0].id);",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });",
+                  "pm.test(\"Product description and images\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(p => { pm.expect(p).to.have.property(\"description\"); pm.expect(p.images).to.be.an(\"array\"); p.images.forEach(i => pm.expect(i.url).to.be.a(\"string\")); }); });"
                 ]
               }
             }
@@ -1409,7 +1495,8 @@
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
                   "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
-                  "pm.test(\"Recipe array\", () => pm.expect(json.data.ingredients).to.be.an(\"array\"));"
+                  "pm.test(\"Recipe array\", () => pm.expect(json.data.ingredients).to.be.an(\"array\"));",
+                  "pm.test(\"Product description and images\", () => { const data = pm.response.json().data; (Array.isArray(data) ? data : [data]).forEach(p => { pm.expect(p).to.have.property(\"description\"); pm.expect(p.images).to.be.an(\"array\"); p.images.forEach(i => pm.expect(i.url).to.be.a(\"string\")); }); });"
                 ]
               }
             }
@@ -1423,22 +1510,66 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "url": "{{base_url}}/products",
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Crispy Meal\",\n  \"item_type\": \"PRODUCED_PRODUCT\",\n  \"unit\": \"PIECE\",\n  \"price\": \"50.00\",\n  \"min_stock\": null,\n  \"category_id\": null,\n  \"department_id\": null,\n  \"is_stock_tracked\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Crispy Meal",
+                  "type": "text"
+                },
+                {
+                  "key": "item_type",
+                  "value": "PRODUCED_PRODUCT",
+                  "type": "text"
+                },
+                {
+                  "key": "unit",
+                  "value": "PIECE",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "50.00",
+                  "type": "text"
+                },
+                {
+                  "key": "is_stock_tracked",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Crispy meal with fries and cola",
+                  "type": "text"
+                },
+                {
+                  "key": "images[]",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Optional JPEG/PNG/WebP file, max 5 MB. Enable and select a local file."
+                },
+                {
+                  "key": "images[]",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Optional JPEG/PNG/WebP file, max 5 MB. Enable and select a local file."
+                },
+                {
+                  "key": "images[]",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Optional JPEG/PNG/WebP file, max 5 MB. Enable and select a local file."
                 }
-              }
-            }
+              ]
+            },
+            "description": " Optional images append on update; no files selected is valid. PHP upload_max_filesize/post_max_size must permit the request. Use images[] File fields, never URLs."
           },
           "event": [
             {
@@ -1450,7 +1581,9 @@
                   "const json = pm.response.json();",
                   "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
                   "pm.collectionVariables.set(\"recipe_product_id\", json.data.id);",
-                  "pm.test(\"Produced product awaiting recipe\", () => { pm.expect(json.data.item_type).to.eql(\"PRODUCED_PRODUCT\"); pm.expect(json.data.ingredients).to.eql([]); });"
+                  "pm.test(\"Produced product awaiting recipe\", () => { pm.expect(json.data.item_type).to.eql(\"PRODUCED_PRODUCT\"); pm.expect(json.data.ingredients).to.eql([]); });",
+                  "pm.test(\"Product media\", () => { const p = pm.response.json().data; pm.expect(p).to.have.property(\"description\"); pm.expect(p.images).to.be.an(\"array\"); p.images.forEach(i => { pm.expect(i.id).to.be.a(\"number\"); pm.expect(i.url).to.be.a(\"string\"); }); });",
+                  "pm.test(\"Optional upload result\", () => { const fields = pm.request.body.formdata.all(); const files = fields.filter(f => f.type === \"file\" && !f.disabled && f.src && (Array.isArray(f.src) ? f.src.length : true)); const images = pm.response.json().data.images; if (files.length) pm.expect(images.length).to.be.at.least(files.length); else pm.expect(images).to.eql([]); });"
                 ]
               }
             }
@@ -1459,27 +1592,52 @@
         {
           "name": "6. Update Product",
           "request": {
-            "method": "PATCH",
+            "method": "POST",
             "header": [
               {
                 "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
                 "value": "application/json"
               }
             ],
             "url": "{{base_url}}/products/{{recipe_product_id}}",
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Crispy Meal Updated\",\n  \"price\": \"55.00\",\n  \"unit\": \"PIECE\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PATCH",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "Crispy Meal Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "55.00",
+                  "type": "text"
+                },
+                {
+                  "key": "unit",
+                  "value": "PIECE",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Updated product description",
+                  "type": "text"
+                },
+                {
+                  "key": "images[]",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Optional JPEG/PNG/WebP file, max 5 MB. Enable and select a local file."
                 }
-              }
-            }
+              ]
+            },
+            "description": " Optional images append on update; no files selected is valid. PHP upload_max_filesize/post_max_size must permit the request. Use images[] File fields, never URLs."
           },
           "event": [
             {
@@ -1490,7 +1648,9 @@
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
                   "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
-                  "pm.test(\"Updated price\", () => pm.expect(json.data.price).to.eql(\"55.00\"));"
+                  "pm.test(\"Updated price\", () => pm.expect(json.data.price).to.eql(\"55.00\"));",
+                  "pm.test(\"Product media\", () => { const p = pm.response.json().data; pm.expect(p).to.have.property(\"description\"); pm.expect(p.images).to.be.an(\"array\"); p.images.forEach(i => { pm.expect(i.id).to.be.a(\"number\"); pm.expect(i.url).to.be.a(\"string\"); }); });",
+                  "pm.test(\"Optional upload result\", () => { const fields = pm.request.body.formdata.all(); const files = fields.filter(f => f.type === \"file\" && !f.disabled && f.src && (Array.isArray(f.src) ? f.src.length : true)); const images = pm.response.json().data.images; if (files.length) pm.expect(images.length).to.be.at.least(files.length);  });"
                 ]
               }
             }
@@ -1930,7 +2090,29 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/printers"
+            "url": {
+              "raw": "{{base_url}}/printers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "printers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -1941,7 +2123,8 @@
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
                   "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
-                  "pm.test(\"Printers array\", () => pm.expect(json.data).to.be.an(\"array\"));"
+                  "pm.test(\"Printers array\", () => pm.expect(json.data).to.be.an(\"array\"));",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2049,7 +2232,29 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/tables"
+            "url": {
+              "raw": "{{base_url}}/tables",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tables"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -2061,7 +2266,8 @@
                   "const json = pm.response.json();",
                   "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
                   "pm.test(\"Active order field\", () => json.data.forEach(t => pm.expect(t).to.have.property(\"active_order\")));",
-                  "pm.collectionVariables.set(\"management_table_number\", Math.max(0, ...json.data.map(t => Number(t.table_number))) + 1);"
+                  "pm.collectionVariables.set(\"management_table_number\", Math.max(0, ...json.data.map(t => Number(t.table_number))) + 1);",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2170,7 +2376,29 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/settings"
+            "url": {
+              "raw": "{{base_url}}/settings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "settings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -2183,7 +2411,8 @@
                   "pm.test(\"Data wrapper\", () => pm.expect(json).to.have.property(\"data\"));",
                   "pm.test(\"Stored strings\", () => json.data.forEach(s => pm.expect(s.value).to.be.a(\"string\")));",
                   "const setting = json.data.find(s => s.key === \"chair_price\") || json.data[0];",
-                  "if (setting) pm.collectionVariables.set(\"management_setting_key\", setting.key);"
+                  "if (setting) pm.collectionVariables.set(\"management_setting_key\", setting.key);",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2246,7 +2475,29 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/inventory"
+            "url": {
+              "raw": "{{base_url}}/inventory",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventory"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -2257,7 +2508,8 @@
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
                   "pm.test(\"Physical stock with decimal strings\", () => pm.response.json().data.forEach(row => { pm.expect([\"RAW_MATERIAL\", \"PURCHASED_PRODUCT\"]).to.include(row.item_type); pm.expect(row.current_quantity).to.match(/^\\d+\\.\\d{3}$/); }));",
-                  "const rows = pm.response.json().data; if (!pm.variables.get(\"product_id\") && rows.length) pm.collectionVariables.set(\"product_id\", rows[0].product_id);"
+                  "const rows = pm.response.json().data; if (!pm.variables.get(\"product_id\") && rows.length) pm.collectionVariables.set(\"product_id\", rows[0].product_id);",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2273,7 +2525,30 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/inventory/movements"
+            "url": {
+              "raw": "{{base_url}}/inventory/movements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventory",
+                "movements"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -2282,7 +2557,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));"
+                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2298,7 +2574,34 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/inventory/movements?product_id={{product_id}}"
+            "url": {
+              "raw": "{{base_url}}/inventory/movements?product_id={{product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inventory",
+                "movements"
+              ],
+              "query": [
+                {
+                  "key": "product_id",
+                  "value": "{{product_id}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -2308,7 +2611,8 @@
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
-                  "pm.test(\"Requested product only\", () => pm.response.json().data.forEach(row => pm.expect(String(row.product_id)).to.eql(String(pm.variables.get(\"product_id\")))));"
+                  "pm.test(\"Requested product only\", () => pm.response.json().data.forEach(row => pm.expect(String(row.product_id)).to.eql(String(pm.variables.get(\"product_id\")))));",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2385,7 +2689,29 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/expenses"
+            "url": {
+              "raw": "{{base_url}}/expenses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "expenses"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -2394,7 +2720,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));"
+                  "pm.test(\"Data is a list\", () => pm.expect(pm.response.json().data).to.be.an(\"array\"));",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2590,6 +2917,12 @@
                 {
                   "key": "per_page",
                   "value": "20"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
                 }
               ]
             }
@@ -2603,7 +2936,8 @@
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
                   "pm.test(\"Paginated jobs\", () => { const json = pm.response.json(); pm.expect(json.data).to.be.an(\"array\"); pm.expect(json).to.have.property(\"meta\"); });",
-                  "const failed = pm.response.json().data.find(job => job.status === \"FAILED\"); if (failed) { pm.collectionVariables.set(\"print_job_id\", failed.id); pm.collectionVariables.set(\"print_job_attempts\", failed.attempts); }"
+                  "const failed = pm.response.json().data.find(job => job.status === \"FAILED\"); if (failed) { pm.collectionVariables.set(\"print_job_id\", failed.id); pm.collectionVariables.set(\"print_job_attempts\", failed.attempts); }",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }
@@ -2778,6 +3112,18 @@
                 {
                   "key": "limit",
                   "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Optional; default 1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "disabled": true,
+                  "description": "Optional; default 20, maximum 100"
                 }
               ]
             }
@@ -2791,7 +3137,8 @@
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "pm.test(\"Data field\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
                   "pm.test(\"Top products\", () => { const data = pm.response.json().data; pm.expect(data).to.be.an(\"array\"); pm.expect(data.length).to.be.at.most(10); data.forEach(row => { pm.expect(row.quantity_sold).to.match(/^\\d+\\.\\d{2}$/); pm.expect(row.sales_amount).to.match(/^\\d+\\.\\d{2}$/); }); });",
-                  "pm.execution.setNextRequest(\"Logout\");"
+                  "pm.execution.setNextRequest(\"Logout\");",
+                  "pm.test(\"Pagination metadata\", () => { const j = pm.response.json(); pm.expect(j.data).to.be.an(\"array\"); pm.expect(j).to.have.property(\"links\"); pm.expect(j.meta.current_page).to.be.a(\"number\"); pm.expect(j.meta.per_page).to.be.within(1, 100); pm.expect(j.meta.total).to.be.a(\"number\"); });"
                 ]
               }
             }

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-/** @property int $id @property int|null $category_id @property int|null $department_id @property string $name @property string $item_type @property string $unit @property string|null $price @property string|null $min_stock @property bool $is_stock_tracked @property bool $is_active @property \Illuminate\Support\Carbon $created_at @property \Illuminate\Support\Carbon|null $updated_at */
+/** @property int $id @property int|null $category_id @property int|null $department_id @property string $name @property string|null $description @property string $item_type @property string $unit @property string|null $price @property string|null $min_stock @property bool $is_stock_tracked @property bool $is_active @property \Illuminate\Support\Carbon $created_at @property \Illuminate\Support\Carbon|null $updated_at */
 class Product extends Model
 {
     public const TYPE_RAW_MATERIAL = 'RAW_MATERIAL';
@@ -26,9 +26,14 @@ class Product extends Model
 
     public const UNIT_PIECE = 'PIECE';
 
-    protected $fillable = ['category_id', 'department_id', 'name', 'item_type', 'unit', 'price', 'min_stock', 'is_stock_tracked', 'is_active'];
+    protected $fillable = ['category_id', 'department_id', 'name', 'description', 'item_type', 'unit', 'price', 'min_stock', 'is_stock_tracked', 'is_active'];
 
     protected $casts = ['price' => 'decimal:2', 'min_stock' => 'decimal:3', 'is_stock_tracked' => 'boolean', 'is_active' => 'boolean', 'created_at' => 'datetime', 'updated_at' => 'datetime'];
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('id');
+    }
 
     public function category(): BelongsTo
     {

@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ListEmployeesRequest extends FormRequest
+class ListEmployeesRequest extends PaginationRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +13,7 @@ class ListEmployeesRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return parent::rules() + [
             'role' => ['sometimes', Rule::in(['ADMIN', 'EMPLOYEE'])],
             'is_active' => ['sometimes', 'boolean'],
             'search' => ['sometimes', 'nullable', 'string', 'max:100'],

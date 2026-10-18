@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\InvalidOrderStateException;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class EmployeeService
 {
-    public function list(array $filters): Collection
+    public function list(array $filters): LengthAwarePaginator
     {
         $query = User::orderBy('id');
         foreach (['role', 'is_active'] as $field) {
@@ -25,7 +25,7 @@ class EmployeeService
             $query->where(fn ($q) => $q->where('name', 'like', $search)->orWhere('username', 'like', $search));
         }
 
-        return $query->get();
+        return $query->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
     public function update(User $employee, array $input): User

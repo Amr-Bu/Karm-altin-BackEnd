@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Expense;
 use App\Models\Order;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class FinancialReportService
 {
@@ -75,6 +77,20 @@ class FinancialReportService
 
     public function topProducts(array $period, int $limit = 10): Collection
     {
+        return $this->rankedProducts($period, $limit)->toBase()->get()->map($this->formatProduct(...));
+    }
+
+    public function paginatedTopProducts(array $filters): LengthAwarePaginator
+    {
+        $ranked = $this->rankedProducts($this->period($filters), $filters['limit'] ?? 10);
+
+        return DB::query()->fromSub($ranked->toBase(), 'ranked_products')
+            ->orderByDesc('quantity_sold')->orderBy('product_id')
+            ->paginate($filters['per_page'] ?? 20)->withQueryString()->through($this->formatProduct(...));
+    }
+
+    private function rankedProducts(array $period, int $limit): Builder
+    {
         // Aggregate the saved item values; current product prices/active flags do not participate.
         $query = Order::query()->join('order_items', 'orders.id', '=', 'order_items.order_id')
             ->join('products', 'products.id', '=', 'order_items.product_id')
@@ -82,8 +98,12 @@ class FinancialReportService
         $this->applyPeriod($query, 'orders.paid_at', $period);
 
         return $query->selectRaw('products.id as product_id, products.name as product_name, SUM(order_items.quantity) as quantity_sold, SUM(order_items.subtotal) as sales_amount')
-            ->groupBy('products.id', 'products.name')->orderByDesc('quantity_sold')->orderBy('products.id')->limit($limit)
-            ->toBase()->get()->map(fn ($row) => ['product_id' => (int) $row->product_id, 'product_name' => $row->product_name,
-                'quantity_sold' => bcadd((string) $row->quantity_sold, '0', 2), 'sales_amount' => bcadd((string) $row->sales_amount, '0', 2)]);
+            ->groupBy('products.id', 'products.name')->orderByDesc('quantity_sold')->orderBy('products.id')->limit($limit);
+    }
+
+    private function formatProduct(object $row): array
+    {
+        return ['product_id' => (int) $row->product_id, 'product_name' => $row->product_name,
+            'quantity_sold' => bcadd((string) $row->quantity_sold, '0', 2), 'sales_amount' => bcadd((string) $row->sales_amount, '0', 2)];
     }
 }

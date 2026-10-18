@@ -5,14 +5,18 @@ namespace App\Services;
 use App\Models\Category;
 use App\Models\InventoryStock;
 use App\Models\Product;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class ProductService
 {
-    public function list(array $filters): Collection
+    public function __construct(private ProductImageService $images) {}
+
+    public function list(array $filters): LengthAwarePaginator
     {
-        $query = Product::with(['category', 'department'])->orderBy('id');
+        $query = Product::with(['category', 'department', 'images'])->orderBy('id');
         if (isset($filters['item_type'])) {
             $query->whereIn('item_type', $filters['item_type']);
         }
@@ -25,7 +29,7 @@ class ProductService
             $query->where('name', 'like', '%'.addcslashes($filters['search'], '\\%_').'%');
         }
 
-        return $query->get();
+        return $query->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
     public function catalog(): Collection
@@ -33,39 +37,58 @@ class ProductService
         return Category::where('is_active', true)->orderBy('id')->with([
             'products' => fn ($query) => $query->where('is_active', true)
                 ->whereIn('item_type', [Product::TYPE_PRODUCED_PRODUCT, Product::TYPE_PURCHASED_PRODUCT])
-                ->with('department')->orderBy('id'),
+                ->with(['department', 'images'])->orderBy('id'),
         ])->get();
     }
 
     public function details(Product $product): Product
     {
-        return $product->load(['category', 'department', 'ingredients.rawMaterial']);
+        return $product->load(['category', 'department', 'images', 'ingredients.rawMaterial']);
     }
 
     public function create(array $input): Product
     {
-        return DB::transaction(function () use ($input) {
-            $product = Product::create($this->normalize($input, $input['item_type']) + ['is_stock_tracked' => true, 'is_active' => true]);
+        return $this->saveWithImages($input, function (array $attributes) {
+            $product = Product::create($this->normalize($attributes, $attributes['item_type']) + ['is_stock_tracked' => true, 'is_active' => true]);
             if ($product->item_type !== Product::TYPE_PRODUCED_PRODUCT) {
                 InventoryStock::create(['product_id' => $product->id, 'current_quantity' => '0.000']);
             }
 
-            return $this->details($product);
-        }, 3);
+            return $product;
+        });
     }
 
     public function update(Product $product, array $input): Product
     {
-        return DB::transaction(function () use ($product, $input) {
+        return $this->saveWithImages($input, function (array $attributes) use ($product) {
             $product = Product::lockForUpdate()->findOrFail($product->id);
-            $product->update($this->normalize($input, $product->item_type));
+            $product->update($this->normalize($attributes, $product->item_type));
             // Tracking toggles never reset balances or remove inventory/history.
             if ($product->item_type !== Product::TYPE_PRODUCED_PRODUCT) {
                 InventoryStock::firstOrCreate(['product_id' => $product->id], ['current_quantity' => '0.000']);
             }
 
-            return $this->details($product);
-        }, 3);
+            return $product;
+        });
+    }
+
+    private function saveWithImages(array $input, callable $save): Product
+    {
+        $uploads = $input['images'] ?? [];
+        unset($input['images']);
+        $paths = [];
+        try {
+            // File I/O must not be replayed by an automatic transaction retry.
+            return DB::transaction(function () use ($input, $uploads, $save, &$paths) {
+                $product = $save($input);
+                $this->images->append($product, $uploads, $paths);
+
+                return $this->details($product);
+            }, $uploads === [] ? 3 : 1);
+        } catch (Throwable $exception) {
+            $this->images->cleanup($paths);
+            throw $exception;
+        }
     }
 
     public function setStatus(Product $product, bool $active): Product

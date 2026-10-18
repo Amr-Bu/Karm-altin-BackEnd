@@ -11,6 +11,8 @@ class ProductResource extends JsonResource
     {
         return [
             'id' => $this->id, 'name' => $this->name, 'item_type' => $this->item_type, 'unit' => $this->unit,
+            'description' => $this->description,
+            'images' => ProductImageResource::collection($this->whenLoaded('images', fn () => $this->images, [])),
             'price' => $this->price, 'min_stock' => $this->min_stock,
             'is_stock_tracked' => $this->is_stock_tracked, 'is_active' => $this->is_active,
             'category' => $this->whenLoaded('category', fn () => ['id' => $this->category->id, 'name' => $this->category->name]),

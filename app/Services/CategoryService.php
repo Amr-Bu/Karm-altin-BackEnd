@@ -25,7 +25,7 @@ class CategoryService
 
     public function details(Category $category): Category
     {
-        return $category->load(['products' => fn ($query) => $query->with('department')->orderBy('id')]);
+        return $category->load(['products' => fn ($query) => $query->with(['department', 'images'])->orderBy('id')]);
     }
 
     public function create(array $input): Category

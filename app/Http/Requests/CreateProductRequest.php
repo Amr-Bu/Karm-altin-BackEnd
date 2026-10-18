@@ -26,6 +26,17 @@ class CreateProductRequest extends FormRequest
         $produced = $type === Product::TYPE_PRODUCED_PRODUCT;
 
         return [
+            'description' => ['sometimes', 'nullable', 'string', function ($attribute, $value, $fail) {
+                if (is_string($value) && strlen($value) > 65535) {
+                    $fail('The description must not exceed 65535 bytes.');
+                }
+            }],
+            'images' => ['sometimes', 'nullable', 'array', 'max:10'],
+            'images.*' => ['bail', 'required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', function ($attribute, $value, $fail) {
+                if (@getimagesize($value->getRealPath()) === false) {
+                    $fail('The uploaded file must contain a valid image.');
+                }
+            }],
             'name' => [$creating ? 'required' : 'sometimes', 'required', 'string', 'max:150'],
             'unit' => [$creating ? 'required' : 'sometimes', 'required', Rule::in([Product::UNIT_KG, Product::UNIT_G, Product::UNIT_LITER, Product::UNIT_ML, Product::UNIT_PIECE])],
             'price' => $raw ? ['exclude'] : [$creating ? 'required' : 'sometimes', 'required', 'numeric', 'regex:/^\d+(?:\.\d{1,2})?$/D', 'min:0', 'max:99999999.99'],

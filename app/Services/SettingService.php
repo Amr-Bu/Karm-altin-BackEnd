@@ -3,14 +3,14 @@
 namespace App\Services;
 
 use App\Models\Setting;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class SettingService
 {
-    public function list(): Collection
+    public function list(array $filters = []): LengthAwarePaginator
     {
-        return Setting::orderBy('key')->get();
+        return Setting::orderBy('key')->paginate($filters['per_page'] ?? 20)->withQueryString();
     }
 
     public function update(string $key, string $value): Setting

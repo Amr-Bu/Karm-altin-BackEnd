@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ListInventoryRequest extends FormRequest
+class ListInventoryRequest extends PaginationRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +13,7 @@ class ListInventoryRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return parent::rules() + [
             'item_type' => ['sometimes', Rule::in(['RAW_MATERIAL', 'PURCHASED_PRODUCT'])],
             'is_active' => ['sometimes', 'boolean'],
             'search' => ['sometimes', 'nullable', 'string', 'max:150'],

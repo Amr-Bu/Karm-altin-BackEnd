@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateTableRequest;
+use App\Http\Requests\PaginationRequest;
 use App\Http\Requests\UpdateTableRequest;
 use App\Http\Resources\RestaurantTableResource;
 use App\Models\RestaurantTable;
@@ -15,9 +16,9 @@ class RestaurantTableController extends Controller
 {
     public function __construct(private RestaurantTableService $service) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(PaginationRequest $request): AnonymousResourceCollection
     {
-        return RestaurantTableResource::collection($this->service->list());
+        return RestaurantTableResource::collection($this->service->list($request->validated()));
     }
 
     public function store(CreateTableRequest $request): JsonResponse

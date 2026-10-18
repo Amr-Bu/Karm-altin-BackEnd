@@ -3,10 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\Product;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ListProductsRequest extends FormRequest
+class ListProductsRequest extends PaginationRequest
 {
     public function authorize(): bool
     {
@@ -22,7 +21,7 @@ class ListProductsRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return parent::rules() + [
             'item_type' => ['sometimes', 'array', 'min:1', 'max:3'],
             'item_type.*' => ['required', 'string', 'distinct', Rule::in([Product::TYPE_RAW_MATERIAL, Product::TYPE_PRODUCED_PRODUCT, Product::TYPE_PURCHASED_PRODUCT])],
             'category_id' => ['sometimes', 'integer', 'exists:categories,id'],

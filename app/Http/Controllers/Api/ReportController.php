@@ -23,6 +23,6 @@ class ReportController extends Controller
     {
         $filters = $request->validated();
 
-        return TopProductResource::collection($this->reports->topProducts($this->reports->period($filters), $filters['limit'] ?? 10));
+        return TopProductResource::collection($this->reports->paginatedTopProducts($filters));
     }
 }
