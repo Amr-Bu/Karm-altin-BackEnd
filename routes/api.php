@@ -22,6 +22,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/catalog', [ProductController::class, 'catalog']);
+    Route::get('/tables', [RestaurantTableController::class, 'index']);
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::middleware('admin')->group(function () {
@@ -50,7 +51,6 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/printers', [PrinterController::class, 'index']);
         Route::post('/printers', [PrinterController::class, 'store']);
         Route::patch('/printers/{printer}', [PrinterController::class, 'update']);
-        Route::get('/tables', [RestaurantTableController::class, 'index']);
         Route::post('/tables', [RestaurantTableController::class, 'store']);
         Route::patch('/tables/{table}', [RestaurantTableController::class, 'update']);
         Route::get('/settings', [SettingController::class, 'index']);

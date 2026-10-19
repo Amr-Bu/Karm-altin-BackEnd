@@ -84,7 +84,7 @@ class ApiPaginationTest extends TestCase
         $this->getJson($this->url($path))->assertUnauthorized();
         $this->withToken($this->f['employee']->createToken('employee-pages')->plainTextToken);
         $this->app['auth']->forgetGuards();
-        $this->getJson($this->url($path))->assertStatus($path === 'orders' ? 200 : 403);
+        $this->getJson($this->url($path))->assertStatus(in_array($path, ['orders', 'tables'], true) ? 200 : 403);
         $this->f['employee']->update(['is_active' => false]);
         $this->app['auth']->forgetGuards();
         $this->getJson($this->url($path))->assertForbidden();

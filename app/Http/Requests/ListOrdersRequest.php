@@ -7,6 +7,14 @@ use Illuminate\Validation\Rule;
 
 class ListOrdersRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        // Accept the employee-facing alias without weakening the query's mandatory scope.
+        if ($this->user()?->role === \App\Models\User::ROLE_EMPLOYEE && $this->has('status') && ! $this->has('order_status')) {
+            $this->merge(['order_status' => $this->input('status')]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;

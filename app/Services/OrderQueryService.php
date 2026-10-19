@@ -8,11 +8,13 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class OrderQueryService
 {
+    private const EMPLOYEE_VISIBLE_STATUSES = [Order::STATUS_PENDING_APPROVAL, Order::STATUS_PREPARING];
+
     public function list(array $filters, User $user): LengthAwarePaginator
     {
         $query = Order::with(['table', 'employee'])->orderByDesc('created_at')->orderByDesc('id');
         if ($user->role !== User::ROLE_ADMIN) {
-            $query->where('employee_id', $user->id);
+            $query->where('employee_id', $user->id)->whereIn('order_status', self::EMPLOYEE_VISIBLE_STATUSES);
         }
         foreach (['order_status', 'payment_status', 'employee_id', 'table_id'] as $field) {
             if (isset($filters[$field])) {
@@ -33,7 +35,8 @@ class OrderQueryService
 
     public function details(Order $order, User $user): Order
     {
-        abort_unless($user->role === User::ROLE_ADMIN || $order->employee_id === $user->id, 403);
+        abort_unless($user->role === User::ROLE_ADMIN || ($order->employee_id === $user->id
+            && in_array($order->order_status, self::EMPLOYEE_VISIBLE_STATUSES, true)), 404);
 
         return $order->load(OrderDataService::RELATIONS);
     }

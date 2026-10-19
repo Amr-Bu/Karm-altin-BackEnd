@@ -13,7 +13,8 @@ class RestaurantTableResource extends JsonResource
 
         return ['id' => $this->id, 'table_number' => $this->table_number, 'default_chairs' => $this->default_chairs,
             'status' => $this->status, 'is_active' => $this->is_active,
-            'active_order' => $order ? ['id' => $order->id, 'order_number' => $order->order_number,
-                'order_status' => $order->order_status, 'payment_status' => $order->payment_status] : null];
+            'active_order' => $this->when($request->user()?->role === \App\Models\User::ROLE_ADMIN,
+                fn () => $order ? ['id' => $order->id, 'order_number' => $order->order_number,
+                    'order_status' => $order->order_status, 'payment_status' => $order->payment_status] : null)];
     }
 }

@@ -24,9 +24,13 @@ class ProductController extends Controller
         return ProductResource::collection($this->products->list($request->validated()));
     }
 
-    public function catalog(): AnonymousResourceCollection
+    public function catalog(\App\Services\OrderDataService $orderData): AnonymousResourceCollection
     {
-        return CategoryCatalogResource::collection($this->products->catalog());
+        $chairPrice = \App\Models\Setting::where('key', 'chair_price')->value('value');
+
+        return CategoryCatalogResource::collection($this->products->catalog())->additional([
+            'meta' => ['pricing' => ['chair_price' => $chairPrice === null ? null : $orderData->money($chairPrice)]],
+        ]);
     }
 
     public function show(Product $product): ProductDetailsResource

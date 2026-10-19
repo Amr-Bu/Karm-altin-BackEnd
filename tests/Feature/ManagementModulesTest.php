@@ -231,7 +231,7 @@ class ManagementModulesTest extends TestCase
         DB::disableQueryLog();
     }
 
-    public function test_all_management_routes_enforce_auth_active_and_admin(): void
+    public function test_management_routes_preserve_auth_active_and_scoped_table_reads(): void
     {
         $requests = [
             ['GET', '/api/categories', []], ['GET', '/api/categories/'.$this->category->id, []],
@@ -251,7 +251,8 @@ class ManagementModulesTest extends TestCase
             $this->app['auth']->forgetGuards();
             $this->withHeader('Authorization', $token ? 'Bearer '.$token : '');
             foreach ($requests as [$method, $url, $body]) {
-                $this->json($method, $url, $body)->assertStatus($status);
+                $expected = $token === $employeeToken && $method === 'GET' && $url === '/api/tables' ? 200 : $status;
+                $this->json($method, $url, $body)->assertStatus($expected);
             }
         }
     }

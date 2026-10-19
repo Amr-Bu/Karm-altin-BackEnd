@@ -78,7 +78,7 @@ class OrdersReportsTest extends TestCase
 
     public function test_order_ownership_admin_access_and_paginated_summaries(): void
     {
-        $mine = $this->order();
+        $mine = $this->order(['order_status' => 'PENDING_APPROVAL', 'payment_status' => 'UNPAID']);
         $other = $this->order(['employee_id' => $this->f['admin']->id, 'created_at' => '2036-04-03 12:00:00']);
         $response = $this->getJson('/api/orders?from=2036-04-01&per_page=1')->assertOk()
             ->assertJsonPath('meta.total', 2)->assertJsonPath('meta.per_page', 1)->assertJsonPath('data.0.id', $other->id);
@@ -89,7 +89,7 @@ class OrdersReportsTest extends TestCase
         $this->loginAs('employee');
         $this->getJson('/api/orders')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $mine->id);
         $this->getJson('/api/orders?employee_id='.$this->f['admin']->id)->assertOk()->assertJsonCount(0, 'data');
-        $this->getJson('/api/orders/'.$other->id)->assertForbidden();
+        $this->getJson('/api/orders/'.$other->id)->assertNotFound();
         $this->getJson('/api/orders/'.$mine->id)->assertOk();
     }
 
